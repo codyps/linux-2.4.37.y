@@ -4,6 +4,8 @@
 #
 mainmenu_name "Linux/SH64 Kernel Configuration"
 
+source kernel/config.in
+
 define_bool CONFIG_SUPERH y
 
 define_bool CONFIG_UID16 y

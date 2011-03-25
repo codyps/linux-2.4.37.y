@@ -7,6 +7,8 @@ mainmenu_name "Linux/SPARC Kernel Configuration"
 define_bool CONFIG_UID16 y
 define_bool CONFIG_HIGHMEM y
 
+source kernel/config.in
+
 mainmenu_option next_comment
 comment 'Code maturity level options'
 bool 'Prompt for development and/or incomplete code/drivers' CONFIG_EXPERIMENTAL

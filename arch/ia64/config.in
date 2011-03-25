@@ -1,5 +1,7 @@
 mainmenu_name "Kernel configuration of Linux for IA-64 machines"
 
+source kernel/config.in
+
 mainmenu_option next_comment
  comment 'Code maturity level options'
  bool 'Prompt for development and/or incomplete code/drivers' CONFIG_EXPERIMENTAL

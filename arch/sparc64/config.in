@@ -4,6 +4,8 @@
 #
 mainmenu_name "Linux/UltraSPARC Kernel Configuration"
 
+source kernel/config.in
+
 mainmenu_option next_comment
 comment 'Code maturity level options'
 bool 'Prompt for development and/or incomplete code/drivers' CONFIG_EXPERIMENTAL

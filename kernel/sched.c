@@ -145,6 +145,21 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 {
 	int weight;
 
+#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
+	/* FIXME: unsigned long => int */
+	unsigned long total_vm = p->mm->total_vm;
+	if (total_vm > INT_MAX) {
+		weight = INT_MAX;
+	} else {
+		weight = total_vm;
+	}
+# ifdef CONFIG_SCHED_FAT
+	goto out;
+# else  /* CONFIG_SCHED_THIN */
+	weight = INT_MAX - weight;
+# endif
+
+#ifdef CONFIG_SCHED_NORMAL
 	/*
 	 * select the current process after every other
 	 * runnable process, but before the idle thread.
@@ -168,7 +183,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 		weight = p->counter;
 		if (!weight)
 			goto out;
-			
+
 #ifdef CONFIG_SMP
 		/* Give a largish advantage to the same processor...   */
 		/* (this is equivalent to penalizing other processors) */
@@ -189,6 +204,8 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	 * into account).
 	 */
 	weight = 1000 + p->rt_priority;
+
+#endif /* CONFIG_SCHED_NORMAL */
 out:
 	return weight;
 }

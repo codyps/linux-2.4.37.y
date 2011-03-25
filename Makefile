@@ -16,7 +16,7 @@ TOPDIR	:= $(shell /bin/pwd)
 HPATH   	= $(TOPDIR)/include
 FINDHPATH	= $(HPATH)/asm $(HPATH)/linux $(HPATH)/scsi $(HPATH)/net $(HPATH)/math-emu
 
-HOSTCC  	= gcc
+HOSTCC  	= gcc -I$(TOPDIR)/include
 HOSTCFLAGS	= -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer
 
 CROSS_COMPILE 	=

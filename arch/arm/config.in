@@ -4,6 +4,8 @@
 #
 mainmenu_name "ARM Linux Kernel Configuration"
 
+source kernel/config.in
+
 define_bool CONFIG_ARM y
 define_bool CONFIG_EISA n
 define_bool CONFIG_SBUS n

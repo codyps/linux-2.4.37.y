@@ -6,4 +6,6 @@ define_bool CONFIG_MIPS y
 define_bool CONFIG_MIPS32 n
 define_bool CONFIG_MIPS64 y
 
+source kernel/config.in
+
 source arch/mips/config-shared.in

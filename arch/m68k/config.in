@@ -8,6 +8,8 @@ define_bool CONFIG_RWSEM_GENERIC_SPINLOCK y
 define_bool CONFIG_RWSEM_XCHGADD_ALGORITHM n
 
 mainmenu_name "Linux/68k Kernel Configuration"
+source kernel/config.in
+
 
 mainmenu_option next_comment
 comment 'Code maturity level options'

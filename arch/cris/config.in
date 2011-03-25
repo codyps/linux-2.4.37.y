@@ -4,6 +4,8 @@
 #
 mainmenu_name "Linux/CRIS Kernel Configuration"
 
+source kernel/config.in
+
 define_bool CONFIG_UID16 y
 define_bool CONFIG_RWSEM_GENERIC_SPINLOCK y
 define_bool CONFIG_RWSEM_XCHGADD_ALGORITHM n
