@@ -159,7 +159,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	weight = INT_MAX - weight;
 # endif
 
-#ifdef CONFIG_SCHED_NORMAL
+#elif defined(CONFIG_SCHED_NORMAL)
 	/*
 	 * select the current process after every other
 	 * runnable process, but before the idle thread.
