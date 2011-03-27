@@ -147,7 +147,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 	/* FIXME: unsigned long => int */
-	unsigned long total_vm = p->mm->total_vm;
+	unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
 	if (total_vm > INT_MAX) {
 		weight = INT_MAX;
 	} else {
@@ -157,9 +157,10 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	goto out;
 # else  /* CONFIG_SCHED_THIN */
 	weight = INT_MAX - weight;
+	goto out;
 # endif
 
-#elif defined(CONFIG_SCHED_NORMAL)
+#else /* CONFIG_SCHED_NORMAL */
 	/*
 	 * select the current process after every other
 	 * runnable process, but before the idle thread.
