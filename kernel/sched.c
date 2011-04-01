@@ -153,12 +153,16 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	} else {
 		weight = total_vm;
 	}
+
 # ifdef CONFIG_SCHED_FAT
-	goto out;
 # else  /* CONFIG_SCHED_THIN */
 	weight = INT_MAX - weight;
-	goto out;
 # endif
+	if (weight <= 0) {
+		weight = 1;
+	}
+	
+	goto out;
 
 #else /* CONFIG_SCHED_NORMAL */
 	/*
