@@ -643,7 +643,7 @@ repeat_schedule:
 	}
 
 	/* Do we need to re-calculate counters? */
-#ifndef CONFIG_SCHED_NORMAL
+#ifdef CONFIG_SCHED_NORMAL
 	if (unlikely(!c)) {
 		struct task_struct *p;
 
