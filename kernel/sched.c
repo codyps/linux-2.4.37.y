@@ -160,9 +160,9 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 	rss = p->mm ? p->mm->rss : 0;
-
+	
 # ifdef CONFIG_SCHED_FAT
-	rss = rss;
+	rss = rss + 1;
 # else  /* CONFIG_SCHED_THIN */
 	rss = ULONG_MAX - rss;
 # endif
@@ -222,7 +222,7 @@ out:
  */
 static inline int preemption_goodness(struct task_struct * prev, struct task_struct * p, int cpu)
 {
-	int g1 = goodness(p, cpu, prev->active_mm);
+	int g1 = goodness(p,    cpu, prev->active_mm);
 	int g2 = goodness(prev, cpu, prev->active_mm);
 	int diff = g1 - g2;
 
@@ -650,21 +650,21 @@ repeat_schedule:
 		}
 	}
 
+//#ifdef CONFIG_SCHED_NORMAL
 	/* Do we need to re-calculate counters? */
 	if (unlikely(!c)) {
 		struct task_struct *p;
 
 		spin_unlock_irq(&runqueue_lock);
 		read_lock(&tasklist_lock);
-//#ifdef CONFIG_SCHED_NORMAL
 		for_each_task(p)
 			p->counter = (p->counter >> 1) + NICE_TO_TICKS(p->nice);
-//#endif
 		read_unlock(&tasklist_lock);
 		spin_lock_irq(&runqueue_lock);
 		printk(KERN_INFO "repeat_schedule");
 		goto repeat_schedule;
 	}
+//#endif
 
 	/*
 	 * from this point on nothing can prevent us from
