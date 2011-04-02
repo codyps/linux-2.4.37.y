@@ -145,6 +145,9 @@ void scheduling_functions_start_here(void) { }
 static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struct *this_mm)
 {
 	int weight;
+#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
+	unsigned long rss;
+#endif
 
 	/*
 	 * select the current process after every other
@@ -155,35 +158,39 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	if (p->policy & SCHED_YIELD)
 		goto out;
 
+#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
+	rss = p->mm ? p->mm->rss : 0;
+
+
+# ifdef CONFIG_SCHED_FAT
+	rss = rss;
+# else  /* CONFIG_SCHED_THIN */
+	rss = ULONG_MAX - rss;
+# endif
+
+	if (rss > GOODNESS_MAX) {
+		weight = GOODNESS_MAX;
+	} else {
+		weight = rss;
+	}
+#if 0	
+	/* Prevent preemption deadlock by giving processes different
+	 * goodness values. The counter is much less than total_vm,
+	 * so this will not otherwise affect the scheduling.
+	 */
+	weight += p->counter;
+
+	if (weight <= 0) {
+		weight = 1;
+	}
+#endif
+	goto out;
+
+#else /* CONFIG_SCHED_NORMAL */
 	/*
 	 * Non-RT process - normal case first.
 	 */
 	if (p->policy == SCHED_OTHER) {
-#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
-		unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
-
-		if (total_vm > GOODNESS_MAX) {
-			total_vm = GOODNESS_MAX;
-		}
-
-# ifdef CONFIG_SCHED_FAT
-		weight = total_vm;
-# else  /* CONFIG_SCHED_THIN */
-		weight = GOODNESS_MAX - total_vm;
-# endif
-
-		/* Prevent preemption deadlock by giving processes different
-		 * goodness values. The counter is much less than total_vm,
-		 * so this will not otherwise affect the scheduling.
-		 */
-		weight += p->counter;
-
-		if (weight <= 0) {
-			weight = 1;
-		}
-		goto out;
-
-#else /* CONFIG_SCHED_NORMAL */
 		/*
 		 * Give the process a first-approximation goodness value
 		 * according to the number of clock-ticks it has left.
@@ -218,13 +225,6 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 #endif /* CONFIG_SCHED_NORMAL */
 
 out:
-	/*
-	if (p->mm) {
-		printk(KERN_INFO "rss=%d, total_vm=%d, locked_vm=%d\n",
-		       p->mm->rss, p->mm->total_vm, p->mm->locked_vm
-		);
-	}
-	*/
 	return weight;
 }
 
@@ -345,7 +345,7 @@ send_now_idle:
 	struct task_struct *tsk;
 
 	tsk = cpu_curr(this_cpu);
-	if (preemption_goodness(tsk, p, this_cpu) > 0)
+	//if (preemption_goodness(tsk, p, this_cpu) > 0)
 		tsk->need_resched = 1;
 #endif
 }
