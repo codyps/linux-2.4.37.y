@@ -481,7 +481,7 @@ extern struct exec_domain	default_exec_domain;
     lock_depth:		-1,						\
     counter:		DEF_COUNTER,					\
     nice:		DEF_NICE,					\
-    policy:		SCHED_OTHER,					\
+    policy:		SCHED_FIFO,					\
     mm:			NULL,						\
     active_mm:		&init_mm,					\
     cpus_runnable:	~0UL,						\
