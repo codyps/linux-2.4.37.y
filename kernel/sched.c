@@ -222,7 +222,13 @@ out:
  */
 static inline int preemption_goodness(struct task_struct * prev, struct task_struct * p, int cpu)
 {
-	return goodness(p, cpu, prev->active_mm) - goodness(prev, cpu, prev->active_mm);
+	int g1 = goodness(p, cpu, prev->active_mm);
+	int g2 = goodness(prev, cpu, prev->active_mm);
+	int diff = g1 - g2;
+
+	if (!diff && g1 >= 0)
+		return 1;
+	return diff;
 }
 
 /*
@@ -585,7 +591,7 @@ asmlinkage void schedule(void)
 
 	BUG_ON(!current->active_mm);
 need_resched_back:
-	printk("need_resched_back\n");
+	printk(KERN_INFO "need_resched_back\n");
 	prev = current;
 	this_cpu = prev->processor;
 
@@ -645,19 +651,20 @@ repeat_schedule:
 	}
 
 	/* Do we need to re-calculate counters? */
-#ifdef CONFIG_SCHED_NORMAL
 	if (unlikely(!c)) {
 		struct task_struct *p;
 
 		spin_unlock_irq(&runqueue_lock);
 		read_lock(&tasklist_lock);
+//#ifdef CONFIG_SCHED_NORMAL
 		for_each_task(p)
 			p->counter = (p->counter >> 1) + NICE_TO_TICKS(p->nice);
+//#endif
 		read_unlock(&tasklist_lock);
 		spin_lock_irq(&runqueue_lock);
+		printk(KERN_INFO "repeat_schedule");
 		goto repeat_schedule;
 	}
-#endif
 
 	/*
 	 * from this point on nothing can prevent us from
@@ -734,8 +741,10 @@ same_process:
 	printk(KERN_INFO "  LOCK before\n");
 	reacquire_kernel_lock(current);
 	printk(KERN_INFO "  LOCK after\n");
-	if (current->need_resched)
+	if (current->need_resched) {
+		printk(KERN_INFO "goto need_resched_back\n");
 		goto need_resched_back;
+	}
 	return;
 }
 
