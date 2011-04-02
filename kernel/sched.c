@@ -154,29 +154,29 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	if (p->policy & SCHED_YIELD)
 		goto out;
 
-#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
-	unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
-	if (total_vm > INT_MAX) {
-		weight = INT_MAX;
-	} else {
-		weight = total_vm;
-	}
-
-# ifdef CONFIG_SCHED_FAT
-# else  /* CONFIG_SCHED_THIN */
-	weight = INT_MAX - weight;
-# endif
-	if (weight <= 0) {
-		weight = 1;
-	}
-	
-	goto out;
-
-#else /* CONFIG_SCHED_NORMAL */
 	/*
 	 * Non-RT process - normal case first.
 	 */
 	if (p->policy == SCHED_OTHER) {
+#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
+		unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
+		if (total_vm > INT_MAX) {
+			weight = INT_MAX;
+		} else {
+			weight = total_vm;
+		}
+
+# ifdef CONFIG_SCHED_FAT
+# else  /* CONFIG_SCHED_THIN */
+		weight = INT_MAX - weight;
+# endif
+		if (weight <= 0) {
+			weight = 1;
+		}
+		
+		goto out;
+
+#else /* CONFIG_SCHED_NORMAL */
 		/*
 		 * Give the process a first-approximation goodness value
 		 * according to the number of clock-ticks it has left.
@@ -200,6 +200,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 			weight += 1;
 		weight += 20 - p->nice;
 		goto out;
+#endif /* CONFIG_SCHED_NORMAL */
 	}
 
 	/*
@@ -209,7 +210,6 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	 */
 	weight = 1000 + p->rt_priority;
 
-#endif /* CONFIG_SCHED_NORMAL */
 out:
 	return weight;
 }
