@@ -577,18 +577,19 @@ asmlinkage void schedule(void)
 	struct list_head *tmp;
 	int this_cpu, c;
 
+#if 0
 	if (current == idle_task(this_cpu))
 		printk(KERN_INFO "IDLE task=%p\n", current);
 	else if (current->mm)
 		printk(KERN_INFO "USER task=%p, rss=%d\n", current, current->mm->rss);
 	else
 		printk(KERN_INFO "KERN task=%p\n", current);
+#endif
 
 	spin_lock_prefetch(&runqueue_lock);
 
 	BUG_ON(!current->active_mm);
 need_resched_back:
-	printk(KERN_INFO "need_resched_back\n");
 	prev = current;
 	this_cpu = prev->processor;
 
@@ -631,7 +632,6 @@ need_resched_back:
 	 */
 
 repeat_schedule:
-	printk(KERN_INFO "repeat_schedule\n");
 	/*
 	 * Default process to select..
 	 */
@@ -643,7 +643,7 @@ repeat_schedule:
 			int weight = goodness(p, this_cpu, prev->active_mm);
 			if (weight > c)
 				c = weight, next = p;
-			printk(KERN_INFO "  CHECK task=%p, weight=%d\n", p, weight);
+			printk(KERN_DEBUG "  CHECK task=%p, weight=%d\n", p, weight);
 		}
 	}
 
@@ -658,7 +658,7 @@ repeat_schedule:
 			p->counter = (p->counter >> 1) + NICE_TO_TICKS(p->nice);
 		read_unlock(&tasklist_lock);
 		spin_lock_irq(&runqueue_lock);
-		printk(KERN_INFO "repeat_schedule");
+		printk(KERN_DEBUG "repeat_schedule");
 		goto repeat_schedule;
 	}
 //#endif
@@ -734,12 +734,12 @@ repeat_schedule:
 	__schedule_tail(prev);
 
 same_process:
-	printk(KERN_INFO "same_process\n");
-	printk(KERN_INFO "  LOCK before\n");
+	//printk(KERN_INFO "same_process\n");
+	//printk(KERN_INFO "  LOCK before\n");
 	reacquire_kernel_lock(current);
-	printk(KERN_INFO "  LOCK after\n");
+	//printk(KERN_INFO "  LOCK after\n");
 	if (current->need_resched) {
-		printk(KERN_INFO "goto need_resched_back\n");
+		printk(KERN_DEBUG "goto need_resched_back\n");
 		goto need_resched_back;
 	}
 	return;
