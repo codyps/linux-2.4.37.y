@@ -226,7 +226,7 @@ static inline int preemption_goodness(struct task_struct * prev, struct task_str
 	int g2 = goodness(prev, cpu, prev->active_mm);
 	int diff = g1 - g2;
 
-	if (!diff && g1 >= 0)
+	if (!diff)
 		return 1;
 	return diff;
 }
