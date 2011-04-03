@@ -161,7 +161,6 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 	rss = p->mm ? p->mm->rss : 0;
 
-
 # ifdef CONFIG_SCHED_FAT
 	rss = rss;
 # else  /* CONFIG_SCHED_THIN */
@@ -173,17 +172,6 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	} else {
 		weight = rss;
 	}
-#if 0	
-	/* Prevent preemption deadlock by giving processes different
-	 * goodness values. The counter is much less than total_vm,
-	 * so this will not otherwise affect the scheduling.
-	 */
-	weight += p->counter;
-
-	if (weight <= 0) {
-		weight = 1;
-	}
-#endif
 	goto out;
 
 #else /* CONFIG_SCHED_NORMAL */
@@ -345,7 +333,7 @@ send_now_idle:
 	struct task_struct *tsk;
 
 	tsk = cpu_curr(this_cpu);
-	//if (preemption_goodness(tsk, p, this_cpu) > 0)
+	if (preemption_goodness(tsk, p, this_cpu) > 0)
 		tsk->need_resched = 1;
 #endif
 }
@@ -655,6 +643,7 @@ repeat_schedule:
 	}
 
 	/* Do we need to re-calculate counters? */
+#ifndef CONFIG_SCHED_NORMAL
 	if (unlikely(!c)) {
 		struct task_struct *p;
 
@@ -666,6 +655,7 @@ repeat_schedule:
 		spin_lock_irq(&runqueue_lock);
 		goto repeat_schedule;
 	}
+#endif
 
 	/*
 	 * from this point on nothing can prevent us from
