@@ -162,12 +162,6 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 		unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
 
-		/* Prevent preemption deadlock by giving processes different
-		 * goodness values. The counter is much less than total_vm,
-		 * so this will not otherwise affect the scheduling.
-		 */
-		total_vm += p->counter;
-
 		if (total_vm > GOODNESS_MAX) {
 			total_vm = GOODNESS_MAX;
 		}
@@ -177,6 +171,12 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 # else  /* CONFIG_SCHED_THIN */
 		weight = GOODNESS_MAX - total_vm;
 # endif
+
+		/* Prevent preemption deadlock by giving processes different
+		 * goodness values. The counter is much less than total_vm,
+		 * so this will not otherwise affect the scheduling.
+		 */
+		total_vm += p->counter;
 
 		if (weight <= 0) {
 			weight = 1;
@@ -218,6 +218,13 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	weight = GOODNESS_MAX + 1 + p->rt_priority;
 
 out:
+	/*
+	if (p->mm) {
+		printk(KERN_INFO "rss=%d, total_vm=%d, locked_vm=%d\n",
+		       p->mm->rss, p->mm->total_vm, p->mm->locked_vm
+		);
+	}
+	*/
 	return weight;
 }
 
