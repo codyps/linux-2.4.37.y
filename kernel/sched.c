@@ -145,9 +145,7 @@ void scheduling_functions_start_here(void) { }
 static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struct *this_mm)
 {
 	int weight;
-#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 	unsigned long rss;
-#endif
 
 	/*
 	 * select the current process after every other
@@ -158,62 +156,19 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	if (p->policy & SCHED_YIELD)
 		goto out;
 
-#if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 	/* always assign kernel proesses a low priority */
-	if (!p->mm) {
-		weight = 1;
+	weight = 1;
+	if (!p->mm)
 		goto out;
-	}
-	
+
+	/* Cap the residents set size to a safe value */
 	rss = p->mm->rss;
 	if (rss > GOODNESS_MAX)
 		rss = GOODNESS_MAX - 1;
 
-# ifdef CONFIG_SCHED_FAT
-	weight = rss + 1;
-# else  /* CONFIG_SCHED_THIN */
-	weight = GOODNESS_MAX - rss + 1;
-# endif
-
-	goto out;
-
-#else /* CONFIG_SCHED_NORMAL */
-	/*
-	 * Non-RT process - normal case first.
-	 */
-	if (p->policy == SCHED_OTHER) {
-		/*
-		 * Give the process a first-approximation goodness value
-		 * according to the number of clock-ticks it has left.
-		 *
-		 * Don't do any other calculations if the time slice is
-		 * over..
-		 */
-		weight = p->counter;
-		if (!weight)
-			goto out;
-
-# ifdef CONFIG_SMP
-		/* Give a largish advantage to the same processor...   */
-		/* (this is equivalent to penalizing other processors) */
-		if (p->processor == this_cpu)
-			weight += PROC_CHANGE_PENALTY;
-# endif
-
-		/* .. and a slight advantage to the current MM */
-		if (p->mm == this_mm || !p->mm)
-			weight += 1;
-		weight += 20 - p->nice;
-		goto out;
-	}
-
-	/*
-	 * Realtime process, select the first one on the
-	 * runqueue (taking priorities within processes
-	 * into account).
-	 */
-	weight = 1000 + p->rt_priority;
-#endif /* CONFIG_SCHED_NORMAL */
+	/* THICK: weight process by resident set size, add 1 to prevent zero
+	 * returns. */
+	weight += rss;
 
 out:
 	return weight;
@@ -651,21 +606,6 @@ repeat_schedule:
 				c = weight, next = p;
 		}
 	}
-
-#ifdef CONFIG_SCHED_NORMAL
-	/* Do we need to re-calculate counters? */
-	if (unlikely(!c)) {
-		struct task_struct *p;
-
-		spin_unlock_irq(&runqueue_lock);
-		read_lock(&tasklist_lock);
-		for_each_task(p)
-			p->counter = (p->counter >> 1) + NICE_TO_TICKS(p->nice);
-		read_unlock(&tasklist_lock);
-		spin_lock_irq(&runqueue_lock);
-		goto repeat_schedule;
-	}
-#endif
 
 	/*
 	 * from this point on nothing can prevent us from
