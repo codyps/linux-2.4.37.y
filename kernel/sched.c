@@ -608,12 +608,18 @@ need_resched_back:
 
 	spin_lock_irq(&runqueue_lock);
 
+#ifdef CONFIG_SCHED_NORMAL
 	/* move an exhausted RR process to be last.. */
 	if (unlikely(prev->policy == SCHED_RR))
 		if (!prev->counter) {
 			prev->counter = NICE_TO_TICKS(prev->nice);
 			move_last_runqueue(prev);
 		}
+#else
+	/* always reorder runqueue to keep tasks with identical rss's
+	 * from starving. */
+	move_last_runqueue(prev);
+#endif
 
 	switch (prev->state) {
 		case TASK_INTERRUPTIBLE:
