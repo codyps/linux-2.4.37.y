@@ -207,7 +207,6 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 			weight += 1;
 		weight += 20 - p->nice;
 		goto out;
-#endif /* CONFIG_SCHED_NORMAL */
 	}
 
 	/*
@@ -215,7 +214,8 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	 * runqueue (taking priorities within processes
 	 * into account).
 	 */
-	weight = GOODNESS_MAX + 1 + p->rt_priority;
+	weight = 1000 + p->rt_priority;
+#endif /* CONFIG_SCHED_NORMAL */
 
 out:
 	/*
