@@ -608,12 +608,18 @@ need_resched_back:
 
 	spin_lock_irq(&runqueue_lock);
 
+#ifdef CONFIG_SCHED_NORMAL
 	/* move an exhausted RR process to be last.. */
 	if (unlikely(prev->policy == SCHED_RR))
 		if (!prev->counter) {
 			prev->counter = NICE_TO_TICKS(prev->nice);
 			move_last_runqueue(prev);
 		}
+#else
+	/* always reorder runqueue to keep tasks with identical rss's
+	 * from starving. */
+	move_last_runqueue(prev);
+#endif
 
 	switch (prev->state) {
 		case TASK_INTERRUPTIBLE:
@@ -643,7 +649,6 @@ repeat_schedule:
 			int weight = goodness(p, this_cpu, prev->active_mm);
 			if (weight > c)
 				c = weight, next = p;
-			//printk(KERN_DEBUG "  CHECK task=%p, weight=%d\n", p, weight);
 		}
 	}
 
@@ -658,7 +663,6 @@ repeat_schedule:
 			p->counter = (p->counter >> 1) + NICE_TO_TICKS(p->nice);
 		read_unlock(&tasklist_lock);
 		spin_lock_irq(&runqueue_lock);
-		//printk(KERN_DEBUG "repeat_schedule");
 		goto repeat_schedule;
 	}
 #endif
@@ -734,12 +738,8 @@ repeat_schedule:
 	__schedule_tail(prev);
 
 same_process:
-	//printk(KERN_INFO "same_process\n");
-	//printk(KERN_INFO "  LOCK before\n");
 	reacquire_kernel_lock(current);
-	//printk(KERN_INFO "  LOCK after\n");
 	if (current->need_resched) {
-		//printk(KERN_DEBUG "goto need_resched_back\n");
 		goto need_resched_back;
 	}
 	return;
