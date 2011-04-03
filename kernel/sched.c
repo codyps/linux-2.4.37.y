@@ -157,16 +157,16 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	weight = -1;
 	if (p->policy & SCHED_YIELD)
 		goto out;
-	
+
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 	rss = p->mm ? p->mm->rss : 0;
 	if (rss > GOODNESS_MAX)
-		rss = GOODNESS_MAX;
-	
+		rss = GOODNESS_MAX - 1;
+
 # ifdef CONFIG_SCHED_FAT
 	weight = rss + 1;
 # else  /* CONFIG_SCHED_THIN */
-	weight = GOODNESS_MAX - rss;
+	weight = GOODNESS_MAX - rss + 1;
 # endif
 
 	goto out;
