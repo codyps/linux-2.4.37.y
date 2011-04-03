@@ -1,0 +1,101 @@
+% ex: tw=74 
+% ex: tw=74 ts=2 sw=2 noet sts=2
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{xkeyval}
+\usepackage[bookmarksnumbered,frenchlinks]{hyperref}
+%\hypersetup{pdfborder=0 0 0}
+\usepackage{multirow}
+\usepackage[english]{babel}
+\usepackage{fullpage}
+\usepackage{tabulary}
+\usepackage{tabularx}
+%\usepackage{natbib}
+\usepackage[all]{hypcap}
+\usepackage{hyperref}
+\usepackage{framed}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{subfig}
+\usepackage{verbatim}
+\usepackage{float}
+\usepackage{datatool}
+%\floatstyle{boxed} 
+%\restylefloat{figure}
+
+\title{\textbf{Homework 3}
+Linux 2.4 Schedulers}
+
+\author{Michael Koval and Cody Schafer}
+\date{\today}
+\begin{document}
+\maketitle
+
+\section{Project}
+
+Implimenting two distinct (though related) schedulers within the Linux
+kernel, version 2.4, replacing the exsisting scheduling. One of the
+schedulers was written to favor tasks with a low resident set size (RSS),
+while the other favors tasks with a high RSS.
+
+\section{Results}
+
+Kernel binaries with the 'thin' (low rss favored), 'thick'  (high rss
+favored), and 'normal' (the traditional linux kernel scheduler) where
+built. A modified version of the 'access pages' program was run on a
+each of the kernels. 
+
+\section{Implimentation}
+
+Each task has all of it's data contained within a respective
+\texttt{task\_struct}. Within this structure is the memory map of the task
+(the \texttt{mm} field) which keeps track of (amoung other things) the
+resident set size (in \texttt{rss}) and the total virtual memory (in
+\texttt{total\_vm}).
+
+The original scheduler implimentation has a function called
+\texttt{goodness} which is given a task and the current memory map and
+returns a value indicating how good it would be to schedule the given
+task. Callers of this function treat negative values specially, and treat
+zero specially in a distinct manner. They also make some assumptions about
+the range of the return, typically expecting it to be addable to an
+\texttt{int} without any overflow.
+
+Replacing the exsisting scheduling with one using the resident set size
+was accomplished by modifying \texttt{goodness} to return a value based on
+a range clipped RSS (so that caller expectations are met to some degree).
+
+It was initially expected that the above modification would be sufficient
+for a functioning scheduler, however, on testing the kernel would hang
+prior to userspace execution. To prevent this from occouring, the
+\texttt{preemption\_goodness} function (which operates similarly to
+\texttt{goodness} but compares two tasks and determines how good it would
+be to switch to the new one) was modified to favor task switching in the
+case where the goodness of the tasks matched. As all kernel tasks lack a
+memory map (and thus are assigned the same goodness) and many tasks may
+have the same number of pages in their resident set (and thus have
+identical RSS's), exactly equal goodness values are extremely likely to
+occour in these scheduler revisions.
+
+\section{Further Posibilities}
+
+Resceduling of the tasks should occor each time a priority changes, thus
+each time the RSS of a task changes. This would require the memory
+management code to have knowledge of the task to which the memory map it
+is modifying belongs alll the way through, or would mean that the
+accounting of rss would need to be centralized to a top level function.
+The current structure of the memory managment code is not condusive to
+tight interaction with tasks, and thus would require large amounts of
+modification to successfully impliment lower latency scheduling dependent
+on RSS. In the present implimentation, rescheduling only occurs when a
+task yields or preforms some blocking task (in the case of userspace
+tasks, a syscall).
+
+Setting the \texttt{need\_reschedule} flag could have been done in the mm
+code (calling schedule here is probably not possible due to preemption
+rules).
+
+
+\end{document}

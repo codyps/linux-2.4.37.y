@@ -1,0 +1,28 @@
+TRASH =  $(TARGET).pdf \
+	 $(TARGET).dvi \
+	 $(TARGET).aux \
+	 $(TARGET).log
+
+TARGET = report
+
+xOBJ = 
+OBJ  = $(addprefix include/, $(xOBJ))
+RM = rm -f
+
+.SECONDARY:
+.PHONY: all
+all: $(TARGET).pdf ;
+
+include/%.tex : %.plot
+	gnuplot $<
+
+.PHONY: clean
+clean:
+	$(RM) *.gen *.eps *.out *.dvi *.pdf *.aux $(TRASH) $(OBJ)
+
+%.pdf : %.dvi
+	dvipdf $< $@
+
+%.dvi : %.tex
+	latex -interaction=nonstopmode $<
+	latex -interaction=nonstopmode $<
