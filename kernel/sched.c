@@ -176,7 +176,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 		 * goodness values. The counter is much less than total_vm,
 		 * so this will not otherwise affect the scheduling.
 		 */
-		total_vm += p->counter;
+		weight += p->counter;
 
 		if (weight <= 0) {
 			weight = 1;
@@ -637,7 +637,7 @@ repeat_schedule:
 	 * Default process to select..
 	 */
 	next = idle_task(this_cpu);
-	c = -1000;
+	c = INT_MIN;
 	list_for_each(tmp, &runqueue_head) {
 		p = list_entry(tmp, struct task_struct, run_list);
 		if (can_schedule(p, this_cpu)) {
