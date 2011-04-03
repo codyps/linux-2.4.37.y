@@ -141,6 +141,7 @@ void scheduling_functions_start_here(void) { }
  *	 +1000: realtime process, select this.
  */
 
+#define GOODNESS_MAX (INT_MAX/4)
 static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struct *this_mm)
 {
 	int weight;
@@ -160,16 +161,19 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 		unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
-		if (total_vm > INT_MAX - 1) {
-			weight = INT_MAX - 1;
-		} else {
-			weight = total_vm;
+		if (total_vm > GOODNESS_MAX) {
+			total_vm = GOODNESS_MAX;
 		}
 
 # ifdef CONFIG_SCHED_FAT
+		weight = total_vm;
 # else  /* CONFIG_SCHED_THIN */
-		weight = INT_MAX - weight;
+		weight = GOODNESS_MAX - total_vm;
 # endif
+
+		if (weight <= 0) {
+			weight = 1;
+		}
 		goto out;
 
 #else /* CONFIG_SCHED_NORMAL */
@@ -204,7 +208,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	 * runqueue (taking priorities within processes
 	 * into account).
 	 */
-	weight = 1000 + p->rt_priority;
+	weight = GOODNESS_MAX + 1 + p->rt_priority;
 
 out:
 	return weight;
