@@ -650,6 +650,7 @@ repeat_schedule:
 			int weight = goodness(p, this_cpu, prev->active_mm);
 			if (weight > c)
 				c = weight, next = p;
+			printk(KERN_INFO ">>> CHECK weight=%d\n", weight);
 		}
 	}
 
