@@ -159,7 +159,13 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 		goto out;
 
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
-	rss = p->mm ? p->mm->rss : 0;
+	/* always assign kernel proesses a low priority */
+	if (!p->mm) {
+		weight = 1;
+		goto out;
+	}
+	
+	rss = p->mm->rss;
 	if (rss > GOODNESS_MAX)
 		rss = GOODNESS_MAX - 1;
 
