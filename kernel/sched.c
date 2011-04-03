@@ -586,6 +586,12 @@ asmlinkage void schedule(void)
 	struct list_head *tmp;
 	int this_cpu, c;
 
+	if (current == idle_task(this_cpu))
+		printk(KERN_INFO "IDLE\n");
+	else if (current->mm)
+		printk(KERN_INFO "USER rss=%d\n", current->mm->rss);
+	else
+		printk(KERN_INFO "KERN\n");
 
 	spin_lock_prefetch(&runqueue_lock);
 
