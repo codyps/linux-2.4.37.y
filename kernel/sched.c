@@ -575,16 +575,17 @@ asmlinkage void schedule(void)
 	int this_cpu, c;
 
 	if (current == idle_task(this_cpu))
-		printk(KERN_INFO "IDLE\n");
+		printk(KERN_INFO "IDLE task=%p\n", current);
 	else if (current->mm)
-		printk(KERN_INFO "USER rss=%d\n", current->mm->rss);
+		printk(KERN_INFO "USER task=%p, rss=%d\n", current, current->mm->rss);
 	else
-		printk(KERN_INFO "KERN\n");
+		printk(KERN_INFO "KERN task=%p\n", current);
 
 	spin_lock_prefetch(&runqueue_lock);
 
 	BUG_ON(!current->active_mm);
 need_resched_back:
+	printk("need_resched_back\n");
 	prev = current;
 	this_cpu = prev->processor;
 
@@ -627,6 +628,7 @@ need_resched_back:
 	 */
 
 repeat_schedule:
+	printk(KERN_INFO "repeat_schedule\n");
 	/*
 	 * Default process to select..
 	 */
@@ -638,7 +640,7 @@ repeat_schedule:
 			int weight = goodness(p, this_cpu, prev->active_mm);
 			if (weight > c)
 				c = weight, next = p;
-			printk(KERN_INFO ">>> CHECK weight=%d\n", weight);
+			printk(KERN_INFO "  CHECK task=%p, weight=%d\n", p, weight);
 		}
 	}
 
@@ -728,7 +730,10 @@ repeat_schedule:
 	__schedule_tail(prev);
 
 same_process:
+	printk(KERN_INFO "same_process\n");
+	printk(KERN_INFO "  LOCK before\n");
 	reacquire_kernel_lock(current);
+	printk(KERN_INFO "  LOCK after\n");
 	if (current->need_resched)
 		goto need_resched_back;
 	return;
