@@ -147,17 +147,18 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	int weight;
 
 	/*
+	 * select the current process after every other
+	 * runnable process, but before the idle thread.
+	 * Also, dont trigger a counter recalculation.
+	 */
+	weight = -1;
+	if (p->policy & SCHED_YIELD)
+		goto out;
+
+	/*
 	 * Non-RT process - normal case first.
 	 */
 	if (p->policy == SCHED_OTHER) {
-		/*
-		 * select the current process after every other
-		 * runnable process, but before the idle thread.
-		 * Also, dont trigger a counter recalculation.
-		 */
-		weight = -1;
-		if (p->policy & SCHED_YIELD)
-			goto out;
 
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 		unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
@@ -188,12 +189,12 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 		if (!weight)
 			goto out;
 
-#ifdef CONFIG_SMP
+# ifdef CONFIG_SMP
 		/* Give a largish advantage to the same processor...   */
 		/* (this is equivalent to penalizing other processors) */
 		if (p->processor == this_cpu)
 			weight += PROC_CHANGE_PENALTY;
-#endif
+# endif
 
 		/* .. and a slight advantage to the current MM */
 		if (p->mm == this_mm || !p->mm)
@@ -955,7 +956,7 @@ static inline struct task_struct *find_process_by_pid(pid_t pid)
 	return tsk;
 }
 
-static int setscheduler(pid_t pid, int policy, 
+static int setscheduler(pid_t pid, int policy,
 			struct sched_param *param)
 {
 	struct sched_param lp;
@@ -981,7 +982,7 @@ static int setscheduler(pid_t pid, int policy,
 	retval = -ESRCH;
 	if (!p)
 		goto out_unlock;
-			
+
 	if (policy < 0)
 		policy = p->policy;
 	else {
@@ -990,7 +991,7 @@ static int setscheduler(pid_t pid, int policy,
 				policy != SCHED_OTHER)
 			goto out_unlock;
 	}
-	
+
 	/*
 	 * Valid priorities for SCHED_FIFO and SCHED_RR are 1..99, valid
 	 * priority for SCHED_OTHER is 0.
@@ -1002,7 +1003,7 @@ static int setscheduler(pid_t pid, int policy,
 		goto out_unlock;
 
 	retval = -EPERM;
-	if ((policy == SCHED_FIFO || policy == SCHED_RR) && 
+	if ((policy == SCHED_FIFO || policy == SCHED_RR) &&
 	    !capable(CAP_SYS_NICE))
 		goto out_unlock;
 	if ((current->euid != p->euid) && (current->euid != p->uid) &&
