@@ -618,7 +618,7 @@ need_resched_back:
 #else
 	/* always reorder runqueue to keep tasks with identical rss's
 	 * from starving. */
-	move_last_runqueue(prev);
+	//move_last_runqueue(prev);
 #endif
 
 	switch (prev->state) {
