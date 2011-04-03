@@ -1,8 +1,0 @@
-#
-# Configure scheduler.
-#
-choice 'Scheduler Type' \
-	"Favor_small_total_vm			CONFIG_SCHED_THIN \
-	 Favor_high_total_vm			CONFIG_SCHED_FAT \
-	 Standard_Scheduler			CONFIG_SCHED_NORMAL" Standard_Scheduler
-
