@@ -159,9 +159,15 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	 * Non-RT process - normal case first.
 	 */
 	if (p->policy == SCHED_OTHER) {
-
 #if defined(CONFIG_SCHED_FAT) || defined(CONFIG_SCHED_THIN)
 		unsigned long total_vm = p->mm ? p->mm->total_vm : 0;
+
+		/* Prevent preemption deadlock by giving processes different
+		 * goodness values. The counter is much less than total_vm,
+		 * so this will not otherwise affect the scheduling.
+		 */
+		total_vm += p->counter;
+
 		if (total_vm > GOODNESS_MAX) {
 			total_vm = GOODNESS_MAX;
 		}
